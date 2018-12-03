@@ -17,11 +17,6 @@ public class MovieWorldApplication extends Application<MovieWorldConfiguration> 
     private final MovieRepository movieRepository = new InMemoryMovieRepository();
 
     @Override
-    public String getName() {
-        return "hello-world";
-    }
-
-    @Override
     public void initialize(Bootstrap<MovieWorldConfiguration> bootstrap) {
         bootstrap.addBundle(new SwaggerBundle<MovieWorldConfiguration>() {
             @Override
