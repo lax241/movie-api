@@ -4,6 +4,7 @@ import io.dropwizard.jersey.params.LongParam;
 import io.interview.MovieConstant;
 import io.interview.api.Movie;
 import io.interview.repository.MovieRepository;
+import io.interview.resources.params.MovieFilterParam;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Optional;
@@ -15,7 +16,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Api
 @Path(MovieConstant.PATH_PREFIX + "/movies")
@@ -43,20 +43,26 @@ public class MovieResource {
     @GET
     public List<Movie> get(@Optional @BeanParam MovieFilterParam paramBean) {
         List<Movie> result = movieRepository.findAll();
-        if(paramBean.getReleaseYearStart() != null){
-            result = result.stream().filter(it -> it.getMovieReleaseYear() >= paramBean.getReleaseYearStart()).collect(Collectors.toList());
+        if (paramBean.getReleaseYearStart() != null) {
+            result.removeIf(movie -> movie.getMovieReleaseYear() < paramBean.getReleaseYearStart());
         }
-        if(paramBean.getReleaseYearTo() != null){
-            result = result.stream().filter(it -> it.getMovieReleaseYear() <= paramBean.getReleaseYearTo()).collect(Collectors.toList());
+        if (paramBean.getReleaseYearTo() != null) {
+            result.removeIf(movie -> movie.getMovieReleaseYear() > paramBean.getReleaseYearTo());
         }
-        if(paramBean.getDurationFrom() != null){
-            result = result.stream().filter(it -> it.getMovieDuration() >= paramBean.getDurationFrom()).collect(Collectors.toList());
+        if (paramBean.getDurationFrom() != null) {
+            result.removeIf(movie -> movie.getMovieDuration() < paramBean.getDurationFrom());
         }
-        if(!StringUtils.isBlank(paramBean.getActorFirstName())){
-            //TODO
+        if (paramBean.getDurationTo() != null) {
+            result.removeIf(movie -> movie.getMovieDuration() > paramBean.getDurationTo());
         }
-        if(!StringUtils.isBlank(paramBean.getActorLastName())){
-            //TODO
+        if (!StringUtils.isBlank(paramBean.getActorFirstName()) && StringUtils.isBlank(paramBean.getActorLastName())) {
+            result.removeIf(movie -> movie.getMovieActorList().stream().noneMatch(actor -> paramBean.getActorFirstName().equalsIgnoreCase(actor.getActorFirstName())));
+        }
+        if (StringUtils.isBlank(paramBean.getActorLastName()) && !StringUtils.isBlank(paramBean.getActorLastName())) {
+            result.removeIf(movie -> movie.getMovieActorList().stream().noneMatch(actor -> paramBean.getActorLastName().equalsIgnoreCase(actor.getActorLastName())));
+        }
+        if (StringUtils.isBlank(paramBean.getActorLastName()) && StringUtils.isBlank(paramBean.getActorLastName())) {
+            result.removeIf(movie -> movie.getMovieActorList().stream().noneMatch(actor -> paramBean.getActorFirstName().equalsIgnoreCase(actor.getActorFirstName()) && paramBean.getActorLastName().equalsIgnoreCase(actor.getActorLastName())));
         }
         return result;
     }

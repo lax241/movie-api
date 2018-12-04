@@ -9,26 +9,26 @@ import io.interview.repository.InMemoryMovieRepository;
 import io.interview.repository.MovieRepository;
 import io.interview.resources.MovieResource;
 
-public class MovieWorldApplication extends Application<MovieWorldConfiguration> {
+public class MovieApplication extends Application<MovieConfiguration> {
     public static void main(String[] args) throws Exception {
-        new MovieWorldApplication().run(args);
+        new MovieApplication().run(args);
     }
 
     private final MovieRepository movieRepository = new InMemoryMovieRepository();
 
     @Override
-    public void initialize(Bootstrap<MovieWorldConfiguration> bootstrap) {
-        bootstrap.addBundle(new SwaggerBundle<MovieWorldConfiguration>() {
+    public void initialize(Bootstrap<MovieConfiguration> bootstrap) {
+        bootstrap.addBundle(new SwaggerBundle<MovieConfiguration>() {
             @Override
-            protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(MovieWorldConfiguration movieWorldConfiguration) {
-                return movieWorldConfiguration.swaggerBundleConfiguration;
+            protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(MovieConfiguration movieConfiguration) {
+                return movieConfiguration.swaggerBundleConfiguration;
             }
 
         });
     }
 
     @Override
-    public void run(MovieWorldConfiguration configuration,
+    public void run(MovieConfiguration configuration,
                     Environment environment) {
         final MovieResource resource = new MovieResource(movieRepository);
         environment.jersey().register(resource);

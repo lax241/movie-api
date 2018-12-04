@@ -11,9 +11,6 @@ public class InMemoryMovieRepository implements MovieRepository {
 
     private Map<Long, Movie> movieMap = new HashMap<>();
 
-    public InMemoryMovieRepository(){
-    }
-
     @Override
     public Movie findById(long id) {
         return movieMap.get(id);

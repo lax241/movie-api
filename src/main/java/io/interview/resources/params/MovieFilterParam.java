@@ -1,4 +1,4 @@
-package io.interview.resources;
+package io.interview.resources.params;
 
 import lombok.Data;
 
