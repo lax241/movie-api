@@ -11,3 +11,6 @@
 
 ### Configuration
 The minimum configuration is included into the project resource directory and should it be enough for the development purpose.
+
+### Swagger support
+Default path: /swagger
