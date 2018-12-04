@@ -23,7 +23,11 @@ public class InMemoryMovieRepository implements MovieRepository {
 
     @Override
     public Movie save(Movie movie) {
-        return movieMap.put(movie.getMovieId(), movie);
+        if (movieMap.get(movie.getMovieId()) != null) {
+            return movieMap.replace(movie.getMovieId(), movie);
+        }
+        movieMap.put(movie.getMovieId(), movie);
+        return movie;
     }
 
     @Override
@@ -31,8 +35,4 @@ public class InMemoryMovieRepository implements MovieRepository {
         return movieMap.remove(id);
     }
 
-    @Override
-    public Movie update(Movie movie) {
-        return movieMap.replace(movie.getMovieId(), movie);
-    }
 }

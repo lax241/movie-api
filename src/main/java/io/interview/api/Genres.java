@@ -1,11 +1,9 @@
 package io.interview.api;
 
-import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-@Data
 public class Genres {
 
     private final static AtomicLong idGenerator = new AtomicLong(1);
@@ -17,5 +15,14 @@ public class Genres {
 
     public Genres() {
         this.genresId = idGenerator.incrementAndGet();
+    }
+
+
+    public Long getGenresId() {
+        return genresId;
+    }
+
+    public void setGenresId(Long genresId) {
+        this.genresId = genresId;
     }
 }

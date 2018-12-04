@@ -1,5 +1,7 @@
 package io.interview.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
@@ -7,12 +9,10 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-
 @Data
 public class Movie {
 
     private final static AtomicLong idGenerator = new AtomicLong(1);
-
     private Long movieId;
     @Length(min = 1, max = 255)
     private String movieTitle;
@@ -35,4 +35,13 @@ public class Movie {
         this.movieId = idGenerator.getAndIncrement();
     }
 
+    @JsonIgnore
+    public void setMovieId(Long movieId) {
+        this.movieId = movieId;
+    }
+
+    @JsonProperty
+    public Long getMovieId() {
+        return movieId;
+    }
 }

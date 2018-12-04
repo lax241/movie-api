@@ -4,10 +4,9 @@ import io.dropwizard.jersey.params.LongParam;
 import io.interview.MovieConstant;
 import io.interview.api.Movie;
 import io.interview.repository.MovieRepository;
+import io.interview.resources.filters.MovieFilter;
 import io.interview.resources.params.MovieFilterParam;
 import io.swagger.annotations.Api;
-import org.apache.commons.lang3.StringUtils;
-import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,47 +40,28 @@ public class MovieResource {
     }
 
     @GET
-    public List<Movie> get(@Optional @BeanParam MovieFilterParam paramBean) {
+    public List<Movie> get(@BeanParam MovieFilterParam movieFilterParam) {
         List<Movie> result = movieRepository.findAll();
-        if (paramBean.getReleaseYearStart() != null) {
-            result.removeIf(movie -> movie.getMovieReleaseYear() < paramBean.getReleaseYearStart());
-        }
-        if (paramBean.getReleaseYearTo() != null) {
-            result.removeIf(movie -> movie.getMovieReleaseYear() > paramBean.getReleaseYearTo());
-        }
-        if (paramBean.getDurationFrom() != null) {
-            result.removeIf(movie -> movie.getMovieDuration() < paramBean.getDurationFrom());
-        }
-        if (paramBean.getDurationTo() != null) {
-            result.removeIf(movie -> movie.getMovieDuration() > paramBean.getDurationTo());
-        }
-        if (!StringUtils.isBlank(paramBean.getActorFirstName()) && StringUtils.isBlank(paramBean.getActorLastName())) {
-            result.removeIf(movie -> movie.getMovieActorList().stream().noneMatch(actor -> paramBean.getActorFirstName().equalsIgnoreCase(actor.getActorFirstName())));
-        }
-        if (StringUtils.isBlank(paramBean.getActorLastName()) && !StringUtils.isBlank(paramBean.getActorLastName())) {
-            result.removeIf(movie -> movie.getMovieActorList().stream().noneMatch(actor -> paramBean.getActorLastName().equalsIgnoreCase(actor.getActorLastName())));
-        }
-        if (StringUtils.isBlank(paramBean.getActorLastName()) && StringUtils.isBlank(paramBean.getActorLastName())) {
-            result.removeIf(movie -> movie.getMovieActorList().stream().noneMatch(actor -> paramBean.getActorFirstName().equalsIgnoreCase(actor.getActorFirstName()) && paramBean.getActorLastName().equalsIgnoreCase(actor.getActorLastName())));
-        }
+        MovieFilter.filterByReleaseYear(movieFilterParam.getReleaseYearFrom(),movieFilterParam.getReleaseYearTo(), result);
+        MovieFilter.filterByDuration(movieFilterParam.getDurationFrom(),movieFilterParam.getDurationTo(), result);
+        MovieFilter.filterByActor(movieFilterParam.getActorFirstName(),movieFilterParam.getActorLastName(), result);
         return result;
     }
 
     @PUT
     @Path("/{movieId}")
     public Response put(@PathParam("movieId") LongParam movieId, @Valid Movie movie) {
-        Movie result = movieRepository.update(movie);
+        Movie result = movieRepository.save(movie);
         if (result == null)
-            return Response.status(Response.Status.NO_CONTENT).build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         else
             return Response.status(Response.Status.OK).build();
     }
 
     @POST
     public Response post(@Valid Movie movie) {
-        movieRepository.save(movie);
-        LOGGER.info("RECEIVE Movie");
-        return Response.status(Response.Status.CREATED).build();
+        long resourceId = movieRepository.save(movie).getMovieId();
+        return Response.status(Response.Status.CREATED).header("Location", MovieConstant.PATH_PREFIX + "/movies/" + resourceId).build();
     }
 
     @DELETE
@@ -90,9 +70,9 @@ public class MovieResource {
         Movie movie = movieRepository.delete(movieId.get());
         LOGGER.info("REMOVE Movie");
         if (movie == null)
-            return Response.status(Response.Status.NO_CONTENT).build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         else
-            return Response.status(Response.Status.ACCEPTED).build();
+            return Response.status(Response.Status.OK).build();
 
     }
 

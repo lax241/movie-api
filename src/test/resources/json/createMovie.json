@@ -1,0 +1,29 @@
+{
+  "movieTitle": "string",
+  "movieReleaseYear": 1920,
+  "movieDuration": 120,
+  "movieLanguage": "string",
+  "movieDescription": "string",
+  "movieActorList": [
+    {
+      "actorId": 0,
+      "actorFirstName": "string",
+      "actorLastName": "string"
+    }
+  ],
+  "movieDirectorList": [
+    {
+      "directorId": 0,
+      "directorFirstName": "string",
+      "directorLastName": "string"
+    }
+  ],
+  "movieGenres": {
+    "genresId": 0
+  },
+  "movieRating": {
+    "ratingId": 0,
+    "rating": 0,
+    "numberOfRatings": 0
+  }
+}

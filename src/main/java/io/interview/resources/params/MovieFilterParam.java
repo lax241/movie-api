@@ -8,7 +8,7 @@ import javax.ws.rs.QueryParam;
 public class MovieFilterParam {
 
     @QueryParam("releaseYearFrom")
-    private Integer releaseYearStart;
+    private Integer releaseYearFrom;
 
     @QueryParam("releaseYearTo")
     private Integer releaseYearTo;
