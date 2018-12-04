@@ -71,7 +71,6 @@ public class MovieIntegrationTest {
         //when
         Response postResponse = RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
         String resourceUrl = postResponse.getHeaderString("Location");
-        movie.setMovieDuration(123);
         Response putResponse = RULE.client().target(resourceUrl).request().buildDelete().invoke();
 
         //then
@@ -86,8 +85,9 @@ public class MovieIntegrationTest {
         //when
         Response postResponse = RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
         String resourceUrl = postResponse.getHeaderString("Location");
-        movie.setMovieDuration(123);
         Response putResponse = RULE.client().target(resourceUrl).request().buildDelete().invoke();
+
+        //TODO
 
         //then
         assertThat(putResponse.getStatus()).isEqualTo(HttpStatus.OK_200);

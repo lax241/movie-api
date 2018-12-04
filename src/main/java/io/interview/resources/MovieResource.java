@@ -7,8 +7,6 @@ import io.interview.repository.MovieRepository;
 import io.interview.resources.filters.MovieFilter;
 import io.interview.resources.params.MovieFilterParam;
 import io.swagger.annotations.Api;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;
@@ -22,7 +20,6 @@ import java.util.List;
 public class MovieResource {
 
     private final MovieRepository movieRepository;
-    private static final Logger LOGGER = LoggerFactory.getLogger(MovieResource.class);
 
 
     public MovieResource(MovieRepository movieRepository) {
@@ -52,10 +49,12 @@ public class MovieResource {
     @Path("/{movieId}")
     public Response put(@PathParam("movieId") LongParam movieId, @Valid Movie movie) {
         Movie result = movieRepository.save(movie);
-        if (result == null)
+        if (result == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
-        else
+        }
+        else {
             return Response.status(Response.Status.OK).build();
+        }
     }
 
     @POST
@@ -68,7 +67,6 @@ public class MovieResource {
     @Path("/{movieId}")
     public Response delete(@PathParam("movieId") LongParam movieId) {
         Movie movie = movieRepository.delete(movieId.get());
-        LOGGER.info("REMOVE Movie");
         if (movie == null)
             return Response.status(Response.Status.NOT_FOUND).build();
         else
