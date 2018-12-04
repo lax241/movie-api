@@ -4,13 +4,12 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
 
-import java.util.concurrent.atomic.AtomicLong;
+import javax.validation.constraints.NotNull;
 
 @Data
 public class Director {
 
-    private final static AtomicLong idGenerator = new AtomicLong(1);
-
+    @NotNull
     private Long directorId;
     @NotBlank
     @Length(min = 2, max = 255)
@@ -18,8 +17,4 @@ public class Director {
     @NotBlank
     @Length(min = 2, max = 255)
     private String directorLastName;
-
-    public Director() {
-        this.directorId = idGenerator.incrementAndGet();
-    }
 }

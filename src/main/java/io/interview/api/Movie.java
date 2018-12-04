@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -15,6 +16,7 @@ public class Movie {
     private final static AtomicLong idGenerator = new AtomicLong(1);
     private Long movieId;
     @Length(min = 1, max = 255)
+    @NotBlank
     private String movieTitle;
     @Min(1900)
     @Max(2100)
@@ -23,6 +25,7 @@ public class Movie {
     @Max(999)
     private Integer movieDuration;
     @Length(min = 2, max = 30)
+    @NotBlank
     private String movieLanguage;
     @Length(max = 255)
     private String movieDescription;

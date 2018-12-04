@@ -1,28 +1,15 @@
 package io.interview.api;
 
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
 
-import java.util.concurrent.atomic.AtomicLong;
+import javax.validation.constraints.NotNull;
 
 public class Genres {
 
-    private final static AtomicLong idGenerator = new AtomicLong(1);
-
+    @NotNull
     private Long genresId;
-
     @Length(min = 2, max = 20)
+    @NotBlank
     private String genresTitle;
-
-    public Genres() {
-        this.genresId = idGenerator.incrementAndGet();
-    }
-
-
-    public Long getGenresId() {
-        return genresId;
-    }
-
-    public void setGenresId(Long genresId) {
-        this.genresId = genresId;
-    }
 }
