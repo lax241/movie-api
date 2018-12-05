@@ -25,7 +25,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class MovieResourceIntegrationTest {
 
     private static final String CONFIG_PATH = ResourceHelpers.resourceFilePath("test-movie.yml");
-    public static final String ENDPOINT_URL = "http://localhost:8080" + MovieConstant.PATH_PREFIX + "/movies";
+    public static final String ENDPOINT_URL = "http://localhost:9000" + MovieConstant.PATH_PREFIX + "/movies";
 
     @ClassRule
     public static final DropwizardAppRule<MovieConfiguration> RULE = new DropwizardAppRule<>(
@@ -39,7 +39,7 @@ public class MovieResourceIntegrationTest {
     @Test
     public void testSwaggerUi() throws Exception {
         //when
-        Response result = RULE.client().target("http://localhost:8080/swagger")
+        Response result = RULE.client().target("http://localhost:9000/swagger")
                 .request().buildGet().invoke();
         //then
         assertThat(result.getStatus()).isEqualTo(200);

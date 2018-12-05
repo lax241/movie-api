@@ -1,2 +1,6 @@
 swagger:
   resourcePackage: io.interview
+server:
+  applicationConnectors:
+  - type: http
+    port: 9000
