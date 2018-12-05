@@ -29,11 +29,7 @@ public class MovieResource {
     @GET
     @Path("/{movieId}")
     public Movie get(@PathParam("movieId") LongParam movieId) {
-        Movie result = movieRepository.findById(movieId.get());
-        if (result != null) {
-            return result;
-        }
-        throw new WebApplicationException(Response.Status.NOT_FOUND);
+        return movieRepository.findById(movieId.get()).orElseThrow(() -> new WebApplicationException(Response.Status.NOT_FOUND));
     }
 
     @GET
@@ -48,12 +44,12 @@ public class MovieResource {
     @PUT
     @Path("/{movieId}")
     public Response put(@PathParam("movieId") LongParam movieId, @Valid Movie movie) {
-        if (movieRepository.findById(movieId.get()) == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        movie.setMovieId(movieId.get());
-        movieRepository.save(movie);
-        return Response.status(Response.Status.OK).build();
+        return movieRepository.findById(movieId.get())
+        .map(it -> {
+            movie.setMovieId(movieId.get());
+            movieRepository.save(movie);
+            return Response.status(Response.Status.OK).build();
+        }).orElseThrow(() -> new WebApplicationException(Response.Status.NOT_FOUND));
     }
 
     @POST
@@ -65,12 +61,9 @@ public class MovieResource {
     @DELETE
     @Path("/{movieId}")
     public Response delete(@PathParam("movieId") LongParam movieId) {
-        Movie movie = movieRepository.delete(movieId.get());
-        if (movie == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        return Response.status(Response.Status.OK).build();
-
+        return movieRepository.delete(movieId.get())
+                .map(it ->  Response.status(Response.Status.OK).build())
+                .orElseThrow(() -> new WebApplicationException(Response.Status.NOT_FOUND));
     }
 
 

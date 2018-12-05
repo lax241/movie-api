@@ -2,10 +2,7 @@ package io.interview.repository;
 
 import io.interview.api.Movie;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class InMemoryMovieRepository implements MovieRepository {
@@ -14,8 +11,8 @@ public class InMemoryMovieRepository implements MovieRepository {
     private final static AtomicLong idGenerator = new AtomicLong(1L);
 
     @Override
-    public Movie findById(long id) {
-        return movieMap.get(id);
+    public Optional<Movie> findById(long id) {
+        return Optional.ofNullable(movieMap.get(id));
     }
 
     @Override
@@ -35,8 +32,8 @@ public class InMemoryMovieRepository implements MovieRepository {
     }
 
     @Override
-    public Movie delete(long id) {
-        return movieMap.remove(id);
+    public Optional<Movie> delete(long id) {
+        return Optional.ofNullable(movieMap.remove(id));
     }
 
 }
