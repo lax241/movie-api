@@ -29,9 +29,9 @@ public class MovieResource {
     @GET
     @Path("/{movieId}")
     public Movie get(@PathParam("movieId") LongParam movieId) {
-        Movie movie = movieRepository.findById(movieId.get());
-        if (movie != null) {
-            return movie;
+        Movie result = movieRepository.findById(movieId.get());
+        if (result != null) {
+            return result;
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -39,22 +39,21 @@ public class MovieResource {
     @GET
     public List<Movie> get(@BeanParam MovieFilterParam movieFilterParam) {
         List<Movie> result = movieRepository.findAll();
-        MovieFilter.filterByReleaseYear(movieFilterParam.getReleaseYearFrom(),movieFilterParam.getReleaseYearTo(), result);
-        MovieFilter.filterByDuration(movieFilterParam.getDurationFrom(),movieFilterParam.getDurationTo(), result);
-        MovieFilter.filterByActor(movieFilterParam.getActorFirstName(),movieFilterParam.getActorLastName(), result);
+        MovieFilter.filterByReleaseYear(movieFilterParam.getReleaseYearFrom(), movieFilterParam.getReleaseYearTo(), result);
+        MovieFilter.filterByDuration(movieFilterParam.getDurationFrom(), movieFilterParam.getDurationTo(), result);
+        MovieFilter.filterByActor(movieFilterParam.getActorFirstName(), movieFilterParam.getActorLastName(), result);
         return result;
     }
 
     @PUT
     @Path("/{movieId}")
     public Response put(@PathParam("movieId") LongParam movieId, @Valid Movie movie) {
-        Movie result = movieRepository.save(movie);
-        if (result == null) {
+        if (movieRepository.findById(movieId.get()) == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        else {
-            return Response.status(Response.Status.OK).build();
-        }
+        movie.setMovieId(movieId.get());
+        movieRepository.save(movie);
+        return Response.status(Response.Status.OK).build();
     }
 
     @POST
@@ -67,10 +66,10 @@ public class MovieResource {
     @Path("/{movieId}")
     public Response delete(@PathParam("movieId") LongParam movieId) {
         Movie movie = movieRepository.delete(movieId.get());
-        if (movie == null)
+        if (movie == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
-        else
-            return Response.status(Response.Status.OK).build();
+        }
+        return Response.status(Response.Status.OK).build();
 
     }
 

@@ -9,11 +9,9 @@ import org.hibernate.validator.constraints.NotBlank;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 @Data
 public class Movie {
 
-    private final static AtomicLong idGenerator = new AtomicLong(1);
     private Long movieId;
     @Length(min = 1, max = 255)
     @NotBlank
@@ -34,9 +32,6 @@ public class Movie {
     private Genres movieGenres;
     private Rating movieRating;
 
-    public Movie() {
-        this.movieId = idGenerator.getAndIncrement();
-    }
 
     @JsonIgnore
     public void setMovieId(Long movieId) {

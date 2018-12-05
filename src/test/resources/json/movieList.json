@@ -1,0 +1,94 @@
+[
+  {
+    "movieTitle": "string",
+    "movieReleaseYear": 1950,
+    "movieDuration": 25,
+    "movieLanguage": "string",
+    "movieDescription": "string",
+    "movieActorList": [
+      {
+        "actorId": 0,
+        "actorFirstName": "exampleFirstName",
+        "actorLastName": "exampleLastName"
+      },
+      {
+        "actorId": 1,
+        "actorFirstName": "test",
+        "actorLastName": "test2"
+      }
+    ],
+    "movieDirectorList": [
+      {
+        "directorId": 0,
+        "directorFirstName": "string",
+        "directorLastName": "string"
+      }
+    ],
+    "movieGenres": {
+      "genresId": 0
+    },
+    "movieRating": {
+      "ratingId": 0,
+      "rating": 0,
+      "numberOfRatings": 0
+    }
+  },
+  {
+    "movieTitle": "string",
+    "movieReleaseYear": 2000,
+    "movieDuration": 120,
+    "movieLanguage": "string",
+    "movieDescription": "string",
+    "movieActorList": [
+      {
+        "actorId": 0,
+        "actorFirstName": "exampleFirstName",
+        "actorLastName": "exampleLastName"
+      }
+    ],
+    "movieDirectorList": [
+      {
+        "directorId": 0,
+        "directorFirstName": "string",
+        "directorLastName": "string"
+      }
+    ],
+    "movieGenres": {
+      "genresId": 0
+    },
+    "movieRating": {
+      "ratingId": 0,
+      "rating": 0,
+      "numberOfRatings": 0
+    }
+  },
+  {
+    "movieTitle": "string",
+    "movieReleaseYear": 2050,
+    "movieDuration": 1,
+    "movieLanguage": "string",
+    "movieDescription": "string",
+    "movieActorList": [
+      {
+        "actorId": 3,
+        "actorFirstName": "AAA",
+        "actorLastName": "BBB"
+      }
+    ],
+    "movieDirectorList": [
+      {
+        "directorId": 0,
+        "directorFirstName": "string",
+        "directorLastName": "string"
+      }
+    ],
+    "movieGenres": {
+      "genresId": 0
+    },
+    "movieRating": {
+      "ratingId": 0,
+      "rating": 0,
+      "numberOfRatings": 0
+    }
+  }
+]

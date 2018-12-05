@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class InMemoryMovieRepository implements MovieRepository {
 
     private Map<Long, Movie> movieMap = new HashMap<>();
+    private final static AtomicLong idGenerator = new AtomicLong(1L);
 
     @Override
     public Movie findById(long id) {
@@ -26,7 +28,9 @@ public class InMemoryMovieRepository implements MovieRepository {
         if (movieMap.get(movie.getMovieId()) != null) {
             return movieMap.replace(movie.getMovieId(), movie);
         }
-        movieMap.put(movie.getMovieId(), movie);
+        long id = idGenerator.getAndIncrement();
+        movie.setMovieId(id);
+        movieMap.put(id, movie);
         return movie;
     }
 
