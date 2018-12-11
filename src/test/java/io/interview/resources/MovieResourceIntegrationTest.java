@@ -1,234 +1,138 @@
-package io.interview.resources;
+package com.interview;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.testing.ResourceHelpers;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import io.interview.MovieApplication;
-import io.interview.MovieConfiguration;
-import io.interview.MovieConstant;
-import io.interview.api.Actor;
-import io.interview.api.Movie;
-import org.eclipse.jetty.http.HttpStatus;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.interview.dto.RepositoryDTO;
+import com.interview.model.Call;
+import org.apache.commons.io.FileUtils;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.File;
 import java.util.List;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class MovieResourceIntegrationTest {
-
-    private static final String CONFIG_PATH = ResourceHelpers.resourceFilePath("test-movie.yml");
-    public static final String ENDPOINT_URL = "http://localhost:9000" + MovieConstant.PATH_PREFIX + "/movies";
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = GitHubInfoApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("integration")
+@Profile("integration")
+@TestPropertySource(locations = "classpath:application-integration.yml")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class GitHubInfoIntegrationTest {
 
     @ClassRule
-    public static final DropwizardAppRule<MovieConfiguration> RULE = new DropwizardAppRule<>(
-            MovieApplication.class, CONFIG_PATH);
+    public static WireMockRule wireMockRule = new WireMockRule(options().port(9999));
 
-    @Before
-    public void initialize() throws Exception{
-        deleteAllEntity();
-    }
+    @Autowired
+    private TestRestTemplate restTemplate;
 
-    @Test
-    public void testSwaggerUi() throws Exception {
-        //when
-        Response result = RULE.client().target("http://localhost:9000/swagger")
-                .request().buildGet().invoke();
-        //then
-        assertThat(result.getStatus()).isEqualTo(200);
-    }
+    @LocalServerPort
+    private int randomServerPort;
 
-    @Test
-    public void testPostMovie() throws Exception {
+    @BeforeClass
+    public static void init() throws Exception{
         //given
-        final Movie movie = prepareRequestBody();
+        wireMockRule.stubFor(get(urlPathMatching("/repos/dropwizard/dropwizard"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+                        .withBody(FileUtils.readFileToString(new ClassPathResource("json/dropwizard.json").getFile()))));
 
-        //when
-        Response response = RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
+        wireMockRule.stubFor(get(urlPathMatching("/repos/dropwizard/metrics"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+                        .withBody(FileUtils.readFileToString(new ClassPathResource("json/dropwizard-metrics.json").getFile()))));
 
-        //then
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.CREATED_201);
-        assertThat(response.getHeaderString("Location")).contains(ENDPOINT_URL + "/");
+        wireMockRule.stubFor(get(urlPathMatching("/repos/dropwizard/notFound"))
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+                        .withBody(FileUtils.readFileToString(new ClassPathResource("json/notFound.json").getFile()))));
+
+        wireMockRule.start();
+    }
+
+    @AfterClass
+    public static void teardown() throws Exception {
+        wireMockRule.stop();
     }
 
     @Test
-    public void testUpdateMovie() throws Exception {
-        //given
-        final Movie movie = prepareRequestBody();
-
+    public void testSuccessfulCall() throws Exception {
         //when
-        Response postResponse = RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-        String resourceUrl = postResponse.getHeaderString("Location");
-        movie.setMovieDuration(123);
-        Response putResponse = RULE.client().target(resourceUrl).request().buildPut(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-
-        //then
-        assertThat(putResponse.getStatus()).isEqualTo(HttpStatus.OK_200);
-    }
-
-    @Test
-    public void testDeleteMovie() throws Exception {
-        //given
-        final Movie movie = prepareRequestBody();
-
-        //when
-        Response postResponse = RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-        String resourceUrl = postResponse.getHeaderString("Location");
-        Response deleteResponse = RULE.client().target(resourceUrl).request().buildDelete().invoke();
+        ResponseEntity<RepositoryDTO> responseEntity =
+                restTemplate.getForEntity("http://localhost:" + randomServerPort + "/repositories/dropwizard/dropwizard", RepositoryDTO.class);
+        RepositoryDTO result = responseEntity.getBody();
 
         //then
-        assertThat(deleteResponse.getStatus()).isEqualTo(HttpStatus.OK_200);
+        assertThat(result.getFullName()).isEqualTo("dropwizard/dropwizard");
+        assertThat(result.getDescription()).isEqualTo("A damn simple library for building production-ready RESTful web services.");
+        assertThat(result.getCloneUrl()).isEqualTo("https://github.com/dropwizard/dropwizard.git");
+        assertThat(result.getStargazersCount()).isEqualTo(6931);
+        assertThat(result.getCreatedAt()).isEqualTo("2011-01-19T19:52:29Z");
     }
 
     @Test
-    public void testGetMovieWithDurationQueryParams() throws Exception {
-        //given
-        final Movie movie = prepareRequestBody();
-        movie.setMovieDuration(120);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-        movie.setMovieDuration(100);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-        movie.setMovieDuration(140);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-
+    public void testNotFoundCall() throws Exception {
         //when
-        String json = RULE.client()
-                .target(ENDPOINT_URL + "?durationFrom=110&durationTo=130")
-                .request().get(String.class);
-        List<Movie> result = new ObjectMapper().readValue(json, new TypeReference<List<Movie>>() {
-        });
+        ResponseEntity<String> responseEntityFromNotFoundReposiotry =
+                restTemplate.getForEntity("http://localhost:" + randomServerPort + "/repositories/dropwizard/notFound", String.class);
+        ResponseEntity<String> responseEntityFromCalls =
+                restTemplate.getForEntity("http://localhost:" + randomServerPort + "/repositories/calls", String.class);
 
         //then
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get(0).getMovieDuration()).isEqualTo(120);
+        assertThat(responseEntityFromNotFoundReposiotry.getStatusCodeValue()).isEqualTo(404);
+        assertThat(responseEntityFromNotFoundReposiotry.getBody()).isEqualTo(FileUtils.readFileToString(new ClassPathResource("json/notFound.json").getFile()));
+
+        assertThat(responseEntityFromCalls.getStatusCodeValue()).isEqualTo(200);
+        assertThat(responseEntityFromCalls.getBody()).isEqualTo("[]");
     }
 
     @Test
-    public void testGetMovieWithReleaseYearQueryParams() throws Exception {
-        //given
-        final Movie movie = prepareRequestBody();
-        movie.setMovieReleaseYear(2000);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-        movie.setMovieReleaseYear(2001);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-        movie.setMovieReleaseYear(2002);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-
+    public void testCalls() throws Exception {
         //when
-        String json = RULE.client()
-                .target(ENDPOINT_URL+"?releaseYearFrom=2001&releaseYearTo=2005")
-                .request().get(String.class);
-        List<Movie> result = new ObjectMapper().readValue(json, new TypeReference<List<Movie>>() {
-        });
+        restTemplate.getForEntity("http://localhost:" + randomServerPort + "/repositories/dropwizard/dropwizard", RepositoryDTO.class);
+        restTemplate.getForEntity("http://localhost:" + randomServerPort + "/repositories/dropwizard/notFound", RepositoryDTO.class);
+        restTemplate.getForEntity("http://localhost:" + randomServerPort + "/repositories/dropwizard/metrics", RepositoryDTO.class);
+
+        ResponseEntity<String> responseEntityFromCalls =
+                restTemplate.getForEntity("http://localhost:" + randomServerPort + "/repositories/calls", String.class);
+        List<Call> result = new ObjectMapper().readValue(responseEntityFromCalls.getBody(), new TypeReference<List<Call>>() {});
 
         //then
         assertThat(result.size()).isEqualTo(2);
-        assertThat(result.get(0).getMovieReleaseYear()).isEqualTo(2001);
+        assertThat(result.get(0).getCallId()).isEqualTo(1L);
+        assertThat(result.get(0).getCallIp()).isEqualTo("127.0.0.1");
+        assertThat(result.get(0).getCallRepository().getRepositoryId()).isEqualTo(1);
+        assertThat(result.get(0).getCallRepository().getRepositoryName()).isEqualTo("dropwizard");
+        assertThat(result.get(0).getCallRepository().getRepositoryOwner().getOwnerName()).isEqualTo("dropwizard");
+        assertThat(result.get(0).getCallRepository().getRepositoryOwner().getOwnerId()).isEqualTo(1L);
+
+        assertThat(result.get(1).getCallId()).isEqualTo(2L);
+        assertThat(result.get(1).getCallIp()).isEqualTo("127.0.0.1");
+        assertThat(result.get(1).getCallRepository().getRepositoryId()).isEqualTo(2L);
+        assertThat(result.get(1).getCallRepository().getRepositoryName()).isEqualTo("metrics");
+        assertThat(result.get(1).getCallRepository().getRepositoryOwner().getOwnerName()).isEqualTo("dropwizard");
+        assertThat(result.get(1).getCallRepository().getRepositoryOwner().getOwnerId()).isEqualTo(1L);
+
     }
 
-    @Test
-    public void testGetMovieWithActorQueryParams() throws Exception {
-        //given
-        final Movie movie = prepareRequestBody();
-        Actor actor = new Actor();
 
-        actor.setActorFirstName("AAA");
-        actor.setActorLastName("bbb");
-        movie.getMovieActorList().add(actor);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-
-        actor.setActorFirstName("ccc");
-        actor.setActorLastName("DDD");
-        movie.getMovieActorList().clear();
-        movie.getMovieActorList().add(actor);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-
-        //when
-        String json = RULE.client()
-                .target(ENDPOINT_URL+"?actorFirstName=ccc&actorLastName=DDD")
-                .request().get(String.class);
-        List<Movie> result = new ObjectMapper().readValue(json, new TypeReference<List<Movie>>() {});
-
-        //then
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get(0).getMovieActorList().get(0).getActorFirstName()).isEqualTo("ccc");
-        assertThat(result.get(0).getMovieActorList().get(0).getActorLastName()).isEqualTo("DDD");
-    }
-
-    @Test
-    public void testGetMovieWithComplexQueryParams() throws Exception {
-        //given
-        final Movie movie = prepareRequestBody();
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-
-        Actor actor = new Actor();
-        actor.setActorFirstName("xxx");
-        actor.setActorLastName("ZZZ");
-        movie.getMovieActorList().add(actor);
-        movie.setMovieDuration(110);
-        movie.setMovieReleaseYear(2005);
-        RULE.client().target(ENDPOINT_URL).request().buildPost(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-
-        //when
-        String json = RULE.client()
-                .target(ENDPOINT_URL+"?actorFirstName=xxx&actorLastName=ZZZ&releaseYearFrom=2001&releaseYearTo=2005&durationFrom=110&durationTo=130")
-                .request().get(String.class);
-        List<Movie> result = new ObjectMapper().readValue(json, new TypeReference<List<Movie>>() {});
-
-        //then
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get(0).getMovieActorList().get(1).getActorFirstName()).isEqualTo("xxx");
-        assertThat(result.get(0).getMovieActorList().get(1).getActorLastName()).isEqualTo("ZZZ");
-        assertThat(result.get(0).getMovieReleaseYear()).isEqualTo(2005);
-        assertThat(result.get(0).getMovieDuration()).isEqualTo(110);
-    }
-
-    @Test
-    public void testGetNonExistMovie() throws Exception {
-         //when
-        Response result = RULE.client()
-                .target(ENDPOINT_URL+"/423")
-                .request().buildGet().invoke();
-        //then
-        assertThat(result.getStatus()).isEqualTo(404);
-    }
-
-    @Test
-    public void testDeleteNonExistMovie() throws Exception {
-        //when
-        Response result = RULE.client()
-                .target(ENDPOINT_URL+"/423")
-                .request().buildDelete().invoke();
-        //then
-        assertThat(result.getStatus()).isEqualTo(404);
-    }
-
-    @Test
-    public void testPutNonExistMovie() throws Exception {
-        //given
-        final Movie movie = prepareRequestBody();
-        //when
-        Response result = RULE.client().target(ENDPOINT_URL+"/423").request().buildPut(Entity.entity(movie, MediaType.APPLICATION_JSON_TYPE)).invoke();
-        //then
-        assertThat(result.getStatus()).isEqualTo(404);
-    }
-
-    private Movie prepareRequestBody() throws java.io.IOException {
-        return new ObjectMapper().readValue(new File(ResourceHelpers.resourceFilePath("json/movie.json")), Movie.class);
-    }
-
-    private void deleteAllEntity() throws Exception {
-        String json = RULE.client()
-                .target(ENDPOINT_URL)
-                .request().get(String.class);
-        List<Movie> result = new ObjectMapper().readValue(json, new TypeReference<List<Movie>>() {});
-        result.forEach(movie -> RULE.client().target(ENDPOINT_URL + "/" + movie.getMovieId()).request().buildDelete().invoke());
-    }
 }
